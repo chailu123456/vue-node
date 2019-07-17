@@ -9,7 +9,7 @@ class Jwt {
     let data = this.data
     let secretKey = "jwt" // 这是加密的密钥
     let token = jwt.sign(data, secretKey,{
-      expiresIn: 60*60*1 // 1小时过期
+      expiresIn: 60*60*8 // 8小时过期
     })
     return token
   }

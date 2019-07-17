@@ -24,31 +24,29 @@ module.exports = function(app,pool,path,fs,JwtUtil) {
 		})
 	})
 
-	app.get('/order', (req,res)=>{
+	app.get('/order', async (req,res)=>{
 		let data = req.query
-		let token = req.get("Authorization"); // 从Authorization中获取token
-		// console.log(req.query)
-		// console.log(token)
-    let jwt = new JwtUtil(token)
-    let returnData = jwt.verifyToken()
-    console.log(returnData)
-    if (returnData.name === "TokenExpiredError") {
-    	res.send({code:403, data: '登录已过期,请重新登录'})
-    } else {
-    	let pageNum = data.num
-			let orderData = `SELECT * FROM orderdata order by id desc limit ${data.page * pageNum - pageNum},${pageNum}`  //order by id desc(id倒叙查询) asc(正序)
-			// let orderData = `SELECT * FROM orderdata`
-
-			if (data.id || data.username || data.province || data.email) {
-				orderData =`SELECT * FROM orderdata WHERE id=? || username=? || province=? || email=? ORDER BY id DESC`
-			}
-			pool.query(orderData,[data.id,data.username,data.province,data.email], (err,result)=>{
-				res.send({code:200, data:result || null, status:'success'})
-			})
-    }
-		
+  	let allpage=null
+  	let pageNum = data.num
+		await findtotal()
+		await backdata(data, pageNum,res)
 	})
 
+	function findtotal() {
+		let total = `SELECT * FROM orderdata`
+		pool.query(total,(err,result)=>{
+			allpage = result.length
+		})
+	}
+	function backdata(data, pageNum,res) {
+		let orderData = `SELECT * FROM orderdata order by id desc limit ${data.page * pageNum - pageNum},${pageNum}`  //order by id desc(id倒叙查询) asc(正序)
+		if (data.id || data.username || data.province || data.email) {
+			orderData =`SELECT * FROM orderdata WHERE id=? || username=? || province=? || email=? ORDER BY id DESC`
+		}
+		pool.query(orderData,[data.id,data.username,data.province,data.email], (err,result)=>{
+			res.send({code:200, data:{result,totalpage:allpage} || null, status:'success'})
+		})
+	}
 	app.put('/order',(req,res)=>{
 		let addData = req.body
 		let sql = 'INSERT INTO orderdata (id,username,province,city,adress,email) VALUES(0,?,?,?,?,?)'
@@ -59,7 +57,6 @@ module.exports = function(app,pool,path,fs,JwtUtil) {
 			if (result) {
 				res.send({code:200,data:null,status:'success'})
 			}
-
 		})
 	})
 
@@ -94,6 +91,53 @@ module.exports = function(app,pool,path,fs,JwtUtil) {
 			if (result) {
 				res.send({code:200,data:null,status:'success'})
 			}
+		})
+	})
+
+	// 读取artic文件夹下所有的目录并读取文件内容存放到对象中
+	app.get('/txtlist',(req,res)=>{
+		fs.readdir('./artic/',(err,files)=>{
+			var count = files.length
+			var resultq = {}
+			for (let i = 0;i<files.length;i++) {
+				let filename = files[i]
+				fs.readFile('./artic/'+filename, (err,result)=>{
+					resultq[filename] = result.toString()
+					count--;
+					if (count<=0) {
+						res.send({code:200,data:resultq,status:'success'})
+					}
+				})
+			}
+		})
+	})
+
+
+	app.get('/editorlist',(req,res)=>{
+		fs.readFile('./artic/test.txt',(err,result)=>{
+			if (err) console.log(err)
+			res.send({code:200,data:result.toString(),status:'success'})
+		})
+	})
+	// 创建文件
+	app.get('/addtext',(req,res)=>{
+		let time = new Date().getTime()
+		fs.appendFile(`./artic/${time}.txt`,"我是追加的字符",function(err){
+	    if(err) {
+	      return console.log(err);
+	    }else{
+	      console.log("追加成功");
+	    }
+		})
+	})
+	
+
+	// 富文本编辑器内容保存
+	app.post('/editor',(req,res)=>{
+		let content = req.body.contents
+		fs.writeFile('./artic/test.txt', content, (err)=>{
+			if (err) console.log(err)
+			res.send({code:200,data:null,status:'success'})
 		})
 	})
 

@@ -4,14 +4,14 @@ var app = express();
 let pool = require('./pool.js')
 
 const jwt = require('jsonwebtoken') // 用来生成token
-// const cors = require('cors') // 予许跨域
+
 
 const path = require('path')
 const fs = require('fs')
 const bodyParse = require("body-parser")
 
 let upload = require('./upload')
-
+let JwtUtil = require('./jwt.js')
 
 //允许跨域
 // app.use(cors());
@@ -23,10 +23,18 @@ app.all('*', function(req, res, next) {
 	res.header("Access-Control-Allow-Headers", "authorization,content-type,contentType");
 	res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
 	res.header("Content-Type", "application/json;charset=utf-8");
+	let token = req.get("Authorization"); // 从Authorization中获取token
+  let jwt = new JwtUtil(token)
+  let returnData = jwt.verifyToken()
+
+  if (returnData.name === "TokenExpiredError") {
+  	res.send({code:403, data: '登录已过期,请重新登录'})
+  	return
+  }
 	next();
 });
 let userset = require('./routes/user.js')
-let JwtUtil = require('./jwt.js')
+
 
 app.use(bodyParse.json({limit: '50mb'}));
 app.use(bodyParse.urlencoded({limit: '50mb', extended: true}));
