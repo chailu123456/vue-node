@@ -52,8 +52,8 @@ app.get('/aaa',(req,res)=>{
 })
 
 app.get('/bbb',(req,res)=>{
-	// let token = req.get("Authorization"); // 从Authorization中获取token
-	let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMyIsInBhc3Nvd3JkIjoiMTIzIiwiaWF0IjoxNTYyNzUxNjAxLCJleHAiOjE1NjI3NTUyMDF9.dL_cK57ILu-8a8_KM025PnQ9DHp1PPChaF59RBxY2So"
+	let token = req.get("Authorization"); // 从Authorization中获取token
+	// let token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjEyMyIsInBhc3Nvd3JkIjoiMTIzIiwiaWF0IjoxNTYyNzUxNjAxLCJleHAiOjE1NjI3NTUyMDF9.dL_cK57ILu-8a8_KM025PnQ9DHp1PPChaF59RBxY2So"
 	let secretKey = "jwt" // 这是加密的密钥
 	jwt.verify(token,secretKey,(err,decode)=>{
 		if (err) {
